@@ -3,6 +3,7 @@ A graph-based financial fraud detection system for bank transactions
 
 # File structure:
 
+```
 Magnus-Fraud-detector/
 │
 ├── 📄 README.md
@@ -31,3 +32,5 @@ Magnus-Fraud-detector/
 │
 └── ui/
    └── dashboard.py                ← 🧑‍💻 Shikavan (UI & Visualization)
+
+```
