@@ -51,6 +51,7 @@ Magnus-Fraud-detector/
 │
 ├── src/         
 │   ├── graph_features.cpp        
+│   ├── graph_features.exe
 │   ├── neural_network.cpp  
 │   ├── neural_netowork.exe         
 │   └── risk_scorer.cpp              
