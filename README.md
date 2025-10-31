@@ -22,12 +22,12 @@ U10,U47,5630.12,2025-10-21 15:11:05,transfer
 ```
 
 # Output format:
-
-**Account_ID**  | **Fraud_Score**
+```
+Account_ID  | Fraud_Score
 U47         | 0.92
 U85         | 0.78
 U128        | 0.15
-
+```
 
 # File structure:
 
