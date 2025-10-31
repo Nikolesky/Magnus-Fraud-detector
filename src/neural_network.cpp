@@ -108,7 +108,7 @@ struct NeuralNetwork {
     }
 };
 
-vvoid train_model(NeuralNetwork &nn, const NodeFeatures &nf) {
+void train_model(NeuralNetwork &nn, const NodeFeatures &nf) {
     // Forward propagation
     vector<double> inputs = {
         (double)nf.in_degree,
@@ -143,7 +143,7 @@ vvoid train_model(NeuralNetwork &nn, const NodeFeatures &nf) {
 
     // Expected output (label)
     double y = (double)nf.is_fraud;
-    double N = 0.01; // learning rate
+    double N = 0.000001; // learning rate
 
     // Compute output layer delta
     Layer &output_layer = nn.network.back();
@@ -227,7 +227,7 @@ int main() {
     }
 
     //save model weights
-    save_model(nn, "model.pkl");
+    save_model(nn, "../models/model_2.pkl");
 
     return 0;
 }
