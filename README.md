@@ -43,14 +43,16 @@ Magnus-Fraud-detector/
 │   └── risk_scores.csv         
 │
 ├── models/
-│   └── GraphFraudNet.pkl           
+│   ├── model_1.pk1
+│   └── model_2.pkl           
 │
 ├── results/
 │   └── classification_report.txt   
 │
 ├── src/         
 │   ├── graph_features.cpp        
-│   ├── neural_network.cpp           
+│   ├── neural_network.cpp  
+│   ├── neural_netowork.exe         
 │   └── risk_scorer.cpp              
 │
 └── ui/
