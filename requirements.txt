@@ -1,7 +1,4 @@
-pandas 
-numpy 
-scikit-learn 
-networkx 
-matplotlib 
-seaborn 
-joblib
+streamlit
+matplotlib
+pandas
+numpy
