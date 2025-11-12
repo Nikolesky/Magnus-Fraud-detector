@@ -69,7 +69,7 @@ int getAccountId(const string& acc, unordered_map<string,int>& accToId, vector<s
 
 // To Build graph and account features using int IDs
 void buildGraph(const vector<Transaction>& txs,
-                vector<vector<int>>& adjList,
+                vector<vector<pair<int,double>>>& adjList,
                 vector<AccountFeatures>& feats,
                 unordered_map<string,int>& accToId,
                 vector<string>& idToAcc)
@@ -88,7 +88,7 @@ void buildGraph(const vector<Transaction>& txs,
             feats.resize(v+1);
         }
         
-        adjList[u].push_back(v);
+        adjList[u].push_back({v, tx.amount});  // edge weight = transaction amount
         
         feats[u].out_degree++;
         feats[u].sum_amount += tx.amount;
@@ -101,7 +101,7 @@ void buildGraph(const vector<Transaction>& txs,
 }
 
 // For calculating average neighbor degree per node
-void computeNeighborDegree(const vector<vector<int>>& adjList, vector<AccountFeatures>& feats) {
+void computeNeighborDegree(const vector<vector<pair<int,double>>>& adjList, vector<AccountFeatures>& feats) {
     int N = (int)feats.size();
     for (int u = 0; u < N; ++u) {
         const auto& neighbors = adjList[u];
@@ -109,16 +109,17 @@ void computeNeighborDegree(const vector<vector<int>>& adjList, vector<AccountFea
             feats[u].avg_neighbor_degree = 0.0;
             continue;
         }
-        double sum_deg = 0.0;
-        for (int nbr : neighbors) {
-            sum_deg += feats[nbr].in_degree + feats[nbr].out_degree;
+        double sum_deg = 0.0,total_w = 0.0;;
+        for (auto &[v, w] : neighbors) {
+            sum_deg += w*(feats[v].in_degree + feats[v].out_degree);
+            total_w += w;
         }
-        feats[u].avg_neighbor_degree = sum_deg / neighbors.size();
+        feats[u].avg_neighbor_degree = (total_w > 0) ?sum_deg / total_w : 0.0;
     }
 }
 
 //  For computing PageRank for graph
-void computePageRank(const vector<vector<int>>& adjList, vector<double>& pagerank, 
+void computePageRank(const vector<vector<pair<int,double>>>& adjList, vector<double>& pagerank, 
                      double damping=0.85, double tol=1e-6, int max_iter=100) {
     int N = (int)adjList.size();
     pagerank.assign(N, 1.0 / N);
@@ -139,10 +140,14 @@ void computePageRank(const vector<vector<int>>& adjList, vector<double>& pageran
         for (int u = 0; u < N; ++u) {
             int out_deg = adjList[u].size();
             if (out_deg == 0) continue;
-            double share = damping * pagerank[u] / out_deg;
-            for (int v : adjList[u]) {
-                new_rank[v] += share;
-            }
+            double sumW = 0.0;
+            for (auto &p : adjList[u]) sumW += p.second;
+
+            for (auto &[v, w] : adjList[u]) {
+                    new_rank[v] += damping * pagerank[u] * (w / sumW);
+                }
+
+            
         }
 
         // Check if ranks have converged
@@ -157,13 +162,13 @@ void computePageRank(const vector<vector<int>>& adjList, vector<double>& pageran
 
 
 // Compute clustering coefficient for each node
-void computeClustering(const vector<vector<int>>& adjList, vector<AccountFeatures>& feats) {
+void computeClustering(const vector<vector<pair<int,double>>>& adjList, vector<AccountFeatures>& feats) {
     int N = (int)adjList.size();
     vector<unordered_set<int>> undirected(N);
 
     // Build undirected graph (adjacency sets)
     for (int u = 0; u < N; ++u) {
-        for (int v : adjList[u]) {
+        for (auto &[v, w]: adjList[u]) {
             undirected[u].insert(v);
             undirected[v].insert(u);
         }
@@ -217,7 +222,7 @@ int main() {
 
     unordered_map<string, int> accToId;
     vector<string> idToAcc;
-    vector<vector<int>> adjList;
+    vector<vector<pair<int, double>>> adjList; // {neighbor, weight=amount}
     vector<AccountFeatures> feats;
 
     buildGraph(txs, adjList, feats, accToId, idToAcc);
