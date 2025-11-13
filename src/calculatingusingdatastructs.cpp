@@ -92,12 +92,12 @@ void sorbyrisk(){ //sorting the vector by risks
     
 }
 
-void showtoprisks(){
+void showtoprisks(){ //using max heap
     cout<<"Top 10 Risky Accounts:";
     cout<<"Loading..";
 
     priority_queue<pair<float, string>> temp = topriskyaccs;
-    for(int i = 0; i<10 && !temp.empty(); i++){
+    for(int i = 0; i<5 && !temp.empty(); i++){
         cout<<i+1<<" - "<<"Account id: "<<topriskyaccs.top().first<<"Risk score: "<<topriskyaccs.top().second<<endl;
         topriskyaccs.pop();
     }
