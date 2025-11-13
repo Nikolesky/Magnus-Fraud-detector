@@ -1,4 +1,12 @@
-#include <bits/stdc++.h>
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <cmath>
+#include <utility>
+#include <algorithm>
 using namespace std;
 
 struct Transaction {
@@ -74,19 +82,20 @@ void buildGraph(const vector<Transaction>& txs,
                 unordered_map<string,int>& accToId,
                 vector<string>& idToAcc)
 {
+
+    for (const auto& tx : txs) {
+        getAccountId(tx.sender, accToId, idToAcc);
+        getAccountId(tx.receiver, accToId, idToAcc);
+    }
+    int N = idToAcc.size();
+    adjList.resize(N);
+    feats.resize(N);
     for (const auto& tx : txs) {
         int u = getAccountId(tx.sender, accToId, idToAcc);
         int v = getAccountId(tx.receiver, accToId, idToAcc);
         
         // Ensure graph can hold all nodes
-        if ((int)adjList.size() <= u) {
-            adjList.resize(u+1);
-            feats.resize(u+1);
-        }
-        if ((int)adjList.size() <= v) {
-            adjList.resize(v+1);
-            feats.resize(v+1);
-        }
+        
         
         adjList[u].push_back({v, tx.amount});  // edge weight = transaction amount
         

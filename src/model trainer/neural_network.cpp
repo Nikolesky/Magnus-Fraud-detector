@@ -1,4 +1,12 @@
-#include <bits/stdc++.h>
+#include <iostream>       
+#include <fstream>         
+#include <vector>          
+#include <string>          
+#include <unordered_map>   
+#include <cmath>          
+#include <algorithm>       
+#include <random>          // for uniform_real_distribution
+#include <chrono>          // for random seeding
 using namespace std;
 
 // Structure to store one data sample (a user's network features)
