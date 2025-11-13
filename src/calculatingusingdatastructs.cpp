@@ -18,27 +18,36 @@ vector<transaction> transacts;
 unordered_map<string, float> riskmap;
 priority_queue<pair<float, string>> topriskyaccs;
 
-//the functions i want in my dashboard
-
-
 //loaddata reads the data from the csv file and stores it in vector transacts
 void loaddata(){
-    ifstream file("data/risk_scores.csv");
+    ifstream file("results/risk_scores.csv");
     if(!file.is_open()){
-        cout<<"Error: could not open risk_scores.csv \n";
+        cout << "Error: could not open data/risk_scores.csv" << endl;
         return;
     }
 
     string line;
-    getline(file, line);
-
-    while(getline(file, line)){ //breaks each line into separate variables 
-        stringstream ss;
+    getline(file, line); // Skip header (user_id,risk_score)
+    
+    int count = 0;
+    while(getline(file, line)){ 
+        // Skip empty lines
+        if(line.empty()) continue;
+        
+        stringstream ss(line);
         string id;
         float risk;
+        
         getline(ss, id, ',');
-        ss>>risk;
+        ss >> risk;
+        
+        // Validate data
+        if(id.empty() || ss.fail()) {
+            continue;
+        }
 
+
+        //storing all the data into different structures
         transaction x = {id, risk};
         transacts.push_back(x);
         riskmap[id] = risk;
@@ -47,35 +56,32 @@ void loaddata(){
 
     file.close();
 
-    cout<<"Successfully loaded data... \n"<<transacts.size()<<" records found\n";
     
 }
 void displaymenu(){
    
-    cout << "\n===== MAGNUS FRAUD DETECTOR DASHBOARD =====\n";
-    cout << "1. Search Transaction by ID\n";
-    cout << "2. Sort Transactions by Risk\n";
-    cout << "3. Show Top Risky Transactions\n";
-    cout << "4. Exit\n";
-    cout << "===========================================\n";
+    cout<<endl<< "===== MAGNUS FRAUD DETECTOR DASHBOARD ====="<<endl;
+    cout<< "1. Search Transaction by ID"<<endl;
+    cout<< "2. Sort Transactions by Risk"<<endl;
+    cout<< "3. Show Top Risky Transactions"<<endl;
+    cout<< "4.  Export Dashboard data"<<endl;
+    cout<< "5. Exit"<<endl;
+    cout << "==========================================="<<endl;
 
 }
 
-void searchTransaction(){
-    string id;
-    cout<<"Enter the id you want to search for: ";
-    cin>>id;
+void searchTransaction(string id){
 
     if(riskmap.count(id)){
-        cout<<"Transaction found! \n";
-        cout<<"Account id : "<<id<<"\nRisk Score: "<<riskmap[id]<<endl;
+        cout<<"Transaction found! "<<endl;
+        cout<<"Account id : "<<id<<endl<<"Risk Score: "<<riskmap[id]<<endl;
     }
     else{
-        cout<<"Transaction not found!\n";
+        cout<<"Transaction not found!"<<endl;
     }
 }
 
-void sorbyrisk(){ //sorting the vector by risks
+vector<transaction> sortbyrisk(){ //sorting the vector by risks
     struct comparator{
         bool operator()(transaction &a, transaction &b){
             return a.risk<b.risk;
@@ -84,49 +90,58 @@ void sorbyrisk(){ //sorting the vector by risks
 
     sort(transacts.begin(), transacts.end(), comparator());
 
-    cout<<"Transactions in descending order..";
-    int n = transacts.size();
-    for(int i = 0; i < min(n, 10); i++){
-        cout<<i+1<<"."<<" Account id: "<<transacts[i].id<<" Risk: "<<transacts[i].risk<<endl;
-    }
-    
+    return transacts;
 }
 
 void showtoprisks(){ //using max heap
-    cout<<"Top 10 Risky Accounts:";
-    cout<<"Loading..";
+    cout<<"Top 10 Risky Accounts:"<<endl;
+   
 
     priority_queue<pair<float, string>> temp = topriskyaccs;
     for(int i = 0; i<5 && !temp.empty(); i++){
-        cout<<i+1<<" - "<<"Account id: "<<topriskyaccs.top().first<<"Risk score: "<<topriskyaccs.top().second<<endl;
-        topriskyaccs.pop();
+        cout<<i+1<<" - "<<"Account id: "<<temp.top().second<<"Risk score: "<<temp.top().first<<endl;
+        temp.pop();
     }
-    
+    cout.flush();
+
+}
+
+void exportDashboardData() {
+    vector<transaction> sortedTransacts = sortbyrisk();
+
+
+    ofstream out("ui/dashboard.csv");
+    if (!out.is_open()) {
+        cout << "Error: could not open ui/dashboard.csv for writing" << endl;
+        return;
+    }
+
+    // Write header
+    out << "id,risk" << endl;
+
+    // Write only top 5% transactions
+    for (int i = 0; i < sortedTransacts.size(); i++) {
+        out << sortedTransacts[i].id << "," << sortedTransacts[i].risk << endl;
+    }
+
+    out.close();
+    cout << "Exported the total transactions to ui/dashboard.csv" << endl;
 }
 
 
 
-int main(){
+int main(int argc, char* argv[]){
     loaddata();
-
-    int choice;
-    do{
-        displaymenu();
-        cout<<"Enter your choice: ";
-        cin>>choice;
-        cin.ignore();
-
-        switch (choice) {
-            case 1: searchTransaction(); break;
-            case 2: sorbyrisk(); break;
-            case 3: showtoprisks(); break;
-            case 4: cout<<"Exiting Dashboars..."; break;
-    
-            default : cout<<"Invalid choice. Try again.";
-    
-        }
-    }while(choice!=4);
-
+    if(argc >= 2){
+        string action = argv[1];
+        if(action=="search" && argc==3) searchTransaction(argv[2]);
+        else if(action=="export") exportDashboardData();
+        else if(action=="top") showtoprisks();
+        else if(action=="sort") sortbyrisk();
+        else cout << "Invalid action!" << endl;
+    } else {
+        cout << "No action provided. Use search/export/top" << endl;
+    }
     return 0;
 }
 
