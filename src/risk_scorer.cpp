@@ -12,6 +12,10 @@ struct AccountFeatures {
     double clustering = 0.0;
 };
 
+struct Account {
+    string id;
+    double score;
+};
 // ---------------------- Graph construction ----------------------
 
 vector<Transaction> parseCSV(const string& filename) {
@@ -260,9 +264,8 @@ int main() {
     NeuralNetwork nn = load_model("../models/model_graph1.pkl");
     cout << "Graph-based model loaded\n";
 
-    ofstream out("../results/risk_scores.csv");
-    out << "user_id,risk_score\n";
-
+    // --- Predict and store risk scores ---
+    vector<Account> accounts;
     for (int i = 0; i < feats.size(); ++i) {
         vector<double> inputs = {
             (double)feats[i].in_degree,
@@ -272,10 +275,24 @@ int main() {
             feats[i].clustering
         };
         double risk = predict(nn, inputs);
-        out << idToAcc[i] << "," << risk << "\n";
+        accounts.push_back({idToAcc[i], risk});
     }
 
+    // --- Normalize risk scores ---
+    double minRisk = accounts[0].score, maxRisk = accounts[0].score;
+    for (auto &a : accounts) {
+        minRisk = min(minRisk, a.score);
+        maxRisk = max(maxRisk, a.score);
+    }
+
+    ofstream out("../results/risk_scores.csv");
+    out << "user_id,risk_score\n";
+    for (auto &a : accounts) {
+        double norm = (maxRisk == minRisk) ? 0.0 : (a.score - minRisk) / (maxRisk - minRisk);
+        out << a.id << "," << norm << "\n";
+    }
     out.close();
-    cout << "Predictions saved to ../results/risk_scores.csv\n";
+
+    cout << "Predictions normalized and saved to ../results/risk_scores.csv\n";
     return 0;
 }
