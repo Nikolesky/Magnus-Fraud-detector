@@ -22,7 +22,7 @@ priority_queue<pair<float, string>> topriskyaccs;
 void loaddata(){
     ifstream file("results/risk_scores.csv");
     if(!file.is_open()){
-        cout << "Error: could not open data/risk_scores.csv" << endl;
+        cout << "Error: could not open results/risk_scores.csv" << endl;
         return;
     }
 
@@ -99,7 +99,7 @@ void showtoprisks(){ //using max heap
 
     priority_queue<pair<float, string>> temp = topriskyaccs;
     for(int i = 0; i<5 && !temp.empty(); i++){
-        cout<<i+1<<" - "<<"Account id: "<<temp.top().second<<"Risk score: "<<temp.top().first<<endl;
+        cout<<i+1<<" - "<<"Account id: "<<temp.top().second<<" Risk score: "<<temp.top().first<<endl;
         temp.pop();
     }
     cout.flush();
