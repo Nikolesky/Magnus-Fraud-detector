@@ -94,9 +94,6 @@ void buildGraph(const vector<Transaction>& txs,
         int u = getAccountId(tx.sender, accToId, idToAcc);
         int v = getAccountId(tx.receiver, accToId, idToAcc);
         
-        // Ensure graph can hold all nodes
-        
-        
         adjList[u].push_back({v, tx.amount});  // edge weight = transaction amount
         
         feats[u].out_degree++;
@@ -132,35 +129,31 @@ void computePageRank(const vector<vector<pair<int,double>>>& adjList, vector<dou
                      double damping=0.85, double tol=1e-6, int max_iter=100) {
     int N = (int)adjList.size();
     pagerank.assign(N, 1.0 / N);
-
     vector<double> new_rank(N, 0.0);
+
+    //  Precompute outgoing weight sums 
+    vector<double> outWeightSum(N, 0.0);
+    for (int u = 0; u < N; ++u)
+    for (auto &[v, w] : adjList[u]) {
+            outWeightSum[u] += w;
+    }
     for (int iter = 0; iter < max_iter; ++iter) {
         double dangling_sum = 0.0;
-        // Calculate the total rank of dangling nodes
         for (int u = 0; u < N; ++u) {
             if (adjList[u].empty()) dangling_sum += pagerank[u];
         }
-
         for (int u = 0; u < N; ++u) {
             new_rank[u] = (1.0 - damping) / N;
             new_rank[u] += damping * dangling_sum / N;
         }
 
-    //  Precompute outgoing weight sums 
-    vector<double> outWeightSum(N, 0.0);
-    for (int u = 0; u < N; ++u)
-    for (auto &[v, w] : adjList[u])
-        outWeightSum[u] += w;
-
         // Compute PageRank  using precomputed sums 
-    for (int u = 0; u < N; ++u) {
-        if (outWeightSum[u] == 0) continue; // skip nodes with no outgoing edges
-        for (auto &[v, w] : adjList[u]) {
-         new_rank[v] += damping * pagerank[u] * (w / outWeightSum[u]);
+         for (int u = 0; u < N; ++u) {
+             if (outWeightSum[u] == 0) continue; // skip nodes with no outgoing edges
+             for (auto &[v, w] : adjList[u]) {
+                new_rank[v] += damping * pagerank[u] * (w / outWeightSum[u]);
+            }
         }
-    }
-
-
         // Check if ranks have converged
         double err = 0.0;
         for (int u = 0; u < N; ++u) err += fabs(new_rank[u] - pagerank[u]);
