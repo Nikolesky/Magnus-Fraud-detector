@@ -1,10 +1,7 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-struct Transaction {
-    string sender, receiver;
-    double amount;
-};
+struct Transaction { string sender, receiver; double amount; };
 
 struct AccountFeatures {
     int in_degree = 0, out_degree = 0;
@@ -15,7 +12,8 @@ struct AccountFeatures {
     double clustering = 0.0;
 };
 
-// Reads transaction data from a CSV file
+// ---------------------- Graph construction ----------------------
+
 vector<Transaction> parseCSV(const string& filename) {
     vector<Transaction> txs;
     ifstream file(filename);
@@ -29,7 +27,6 @@ vector<Transaction> parseCSV(const string& filename) {
     while (getline(file, line)) {
         vector<string> fields;
         size_t start = 0, end = 0;
-
         while ((end = line.find(',', start)) != string::npos) {
             fields.push_back(line.substr(start, end - start));
             start = end + 1;
@@ -42,23 +39,19 @@ vector<Transaction> parseCSV(const string& filename) {
     return txs;
 }
 
-// Assigns numeric IDs to account names
 int getAccountId(const string& acc, unordered_map<string,int>& accToId, vector<string>& idToAcc) {
-    if (accToId.find(acc) != accToId.end())
-        return accToId[acc];
-    int id = (int)idToAcc.size();
+    if (accToId.find(acc) != accToId.end()) return accToId[acc];
+    int id = idToAcc.size();
     accToId[acc] = id;
     idToAcc.push_back(acc);
     return id;
 }
 
-// Builds adjacency list and base features
 void buildGraph(const vector<Transaction>& txs,
                 vector<vector<int>>& adjList,
                 vector<AccountFeatures>& feats,
                 unordered_map<string,int>& accToId,
-                vector<string>& idToAcc)
-{
+                vector<string>& idToAcc) {
     for (const auto& tx : txs) {
         int u = getAccountId(tx.sender, accToId, idToAcc);
         int v = getAccountId(tx.receiver, accToId, idToAcc);
@@ -70,13 +63,12 @@ void buildGraph(const vector<Transaction>& txs,
 
         adjList[u].push_back(v);
         feats[u].out_degree++;
+        feats[v].in_degree++;
         feats[u].sum_amount += tx.amount;
         feats[u].tx_count++;
-        feats[v].in_degree++;
     }
 }
 
-// Calculates average neighbor degree for each node
 void computeNeighborDegree(const vector<vector<int>>& adjList, vector<AccountFeatures>& feats) {
     int N = feats.size();
     for (int u = 0; u < N; ++u) {
@@ -91,7 +83,6 @@ void computeNeighborDegree(const vector<vector<int>>& adjList, vector<AccountFea
     }
 }
 
-// Computes PageRank scores for all nodes
 void computePageRank(const vector<vector<int>>& adjList, vector<double>& pagerank,
                      double damping = 0.85, double tol = 1e-6, int max_iter = 100) {
     int N = adjList.size();
@@ -125,7 +116,6 @@ void computePageRank(const vector<vector<int>>& adjList, vector<double>& pageran
     }
 }
 
-// Computes clustering coefficient for each node
 void computeClustering(const vector<vector<int>>& adjList, vector<AccountFeatures>& feats) {
     int N = adjList.size();
     vector<unordered_set<int>> undirected(N);
@@ -139,10 +129,7 @@ void computeClustering(const vector<vector<int>>& adjList, vector<AccountFeature
 
     for (int u = 0; u < N; ++u) {
         int k = undirected[u].size();
-        if (k < 2) {
-            feats[u].clustering = 0.0;
-            continue;
-        }
+        if (k < 2) { feats[u].clustering = 0.0; continue; }
 
         int links = 0;
         vector<int> nbrVec(undirected[u].begin(), undirected[u].end());
@@ -154,12 +141,19 @@ void computeClustering(const vector<vector<int>>& adjList, vector<AccountFeature
     }
 }
 
+// ---------------------- Neural network structures ----------------------
+
 struct Edge { int to; double weight; };
 struct GraphNode { int id; double bias, z, output; vector<Edge> edges; };
 struct Layer { vector<GraphNode> nodes; };
-struct NeuralNetwork { vector<Layer> layers; };
 
-// Loads a trained neural network model
+struct NeuralNetwork {
+    vector<Layer> layers;
+    unordered_map<int, GraphNode*> node_map; // <-- hash map for O(1) access
+};
+
+// ---------------------- Model load ----------------------
+
 NeuralNetwork load_model(const string &filename) {
     NeuralNetwork nn;
     ifstream in(filename, ios::binary);
@@ -190,6 +184,7 @@ NeuralNetwork load_model(const string &filename) {
                 in.read(reinterpret_cast<char*>(&edge.to), sizeof(edge.to));
                 in.read(reinterpret_cast<char*>(&edge.weight), sizeof(edge.weight));
             }
+            nn.node_map[node.id] = &node; // register node
         }
     }
 
@@ -197,15 +192,13 @@ NeuralNetwork load_model(const string &filename) {
     return nn;
 }
 
-// Finds a node by its ID in the neural network
-GraphNode* findNodeById(vector<Layer> &layers, int id) {
-    for (auto &L : layers)
-        for (auto &n : L.nodes)
-            if (n.id == id) return &n;
-    return nullptr;
+// ---------------------- Prediction ----------------------
+
+GraphNode* findNodeById(NeuralNetwork &nn, int id) {
+    auto it = nn.node_map.find(id);
+    return (it != nn.node_map.end()) ? it->second : nullptr;
 }
 
-// Normalizes raw input features
 vector<double> normalizeInputs(const vector<double>& inputs) {
     vector<double> scaled = inputs;
     vector<double> mins = {0, 0, 0, 0.000001, 0};
@@ -218,18 +211,17 @@ vector<double> normalizeInputs(const vector<double>& inputs) {
     return scaled;
 }
 
-// Performs forward pass prediction using the trained model
 double predict(NeuralNetwork &nn, const vector<double> &raw_inputs) {
     vector<double> inputs = normalizeInputs(raw_inputs);
 
     for (int i = 0; i < nn.layers[0].nodes.size() && i < inputs.size(); i++)
         nn.layers[0].nodes[i].output = inputs[i];
 
-    for (int i = 1; i < nn.layers.size(); i++) {
-        for (auto &node : nn.layers[i].nodes) {
+    for (int li = 1; li < nn.layers.size(); li++) {
+        for (auto &node : nn.layers[li].nodes) {
             double z = node.bias;
             for (auto &edge : node.edges) {
-                GraphNode *prev = findNodeById(nn.layers, edge.to);
+                GraphNode *prev = findNodeById(nn, edge.to);
                 if (prev) z += prev->output * edge.weight;
             }
             node.z = z;
@@ -240,7 +232,8 @@ double predict(NeuralNetwork &nn, const vector<double> &raw_inputs) {
     return nn.layers.back().nodes.empty() ? 0.0 : nn.layers.back().nodes[0].output;
 }
 
-// Builds graph, extracts features, loads model, predicts fraud risk
+// ---------------------- Main ----------------------
+
 int main() {
     string filename;
     cout << "Enter path to transactions CSV file: ";
@@ -262,10 +255,10 @@ int main() {
         feats[i].pagerank = pagerank[i];
 
     computeClustering(adjList, feats);
-    cout << "Graph features computed \n";
+    cout << "Graph features computed\n";
 
-    NeuralNetwork nn = load_model("../models/model_graph.pkl");
-    cout << "Graph-based model loaded \n";
+    NeuralNetwork nn = load_model("../models/model_graph1.pkl");
+    cout << "Graph-based model loaded\n";
 
     ofstream out("../results/risk_scores.csv");
     out << "user_id,risk_score\n";

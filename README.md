@@ -43,18 +43,23 @@ Magnus-Fraud-detector/
 │   └── risk_scores.csv         
 │
 ├── models/
-│   ├── model_1.pk1
-│   └── model_2.pkl           
+│   ├── model_graph1.pkl
+│   └── model_graph2.pkl           
 │
 ├── results/
-│   └── classification_report.txt   
+│   ├── node_input.csv
+│   ├── risk_scorer.csv
+│   └── graph.py   
 │
 ├── src/         
-│   ├── graph_features.cpp        
-│   ├── graph_features.exe
-│   ├── neural_network.cpp  
-│   ├── neural_netowork.exe         
-│   └── risk_scorer.cpp              
+│   ├── model trainer
+│   │    ├── graph_features.cpp
+│   │    ├── graph_features.exe
+│   │    ├── neural_network.cpp  
+│   │    └── neural_netowork.exe        
+│   │ 
+│   ├── risk_scorer.cpp
+│   └── risk_scorer.exe              
 │
 └── ui/
    └── dashboard.py
