@@ -66,19 +66,33 @@ Magnus-Fraud-detector/
 
 ```
 
-# Graph Feature Extraction (graph_features.cpp)
+# FLOW:
 
+**Graph Feature Extraction (graph_features.cpp for training and risk_scorer.cpp for fraud scoring):**
+```
 This module processes the transaction data and creates a graph-based representation of the network.
 Each account is treated as a node, and every transaction between two accounts is represented as a directed edge weighted by the transaction amount.
 
 It then calculates several important features for each account, such as:
 
  -In-degree and Out-degree – number of incoming and outgoing transactions
-
  -Average Neighbor Degree – how connected an account’s neighbors are
-
  -PageRank – measures how central or important an account is in the network
-
  -Clustering Coefficient – checks how strongly an account’s neighbors are connected, which can help identify fraud rings
 
 Finally, all the computed features are saved in node_features.csv, which is later used for fraud scoring and model training.
+
+```
+
+**Neural Network Architecture (neural_network.cpp for training and risk_scorer.cpp for implementing):**
+```
+This module processes the node features created during graph feature extraction. 
+It creates a forward-pass neural network, normalizes and passes the graph metrics into the input layer.
+The nodes of the input layer are connected to the nodes of successive layer through a graph data structure of graphnodes, where each graphnode stores a hashmap which consists of indexing and pointer torwards the specific node where all the information related to that node is stored.
+
+-Input Layer: normalized graph metrics per account
+-Hidden Layers: connected through graph-inspired edges
+-Output Layer: fraud probability (risk score)
+-Connections: stored as a graph (vector<edges> per node)
+-Weights: stored using an unordered_map<int, GraphNode*> for O(1) access
+```
