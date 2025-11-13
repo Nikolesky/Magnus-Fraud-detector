@@ -118,7 +118,7 @@ void computeNeighborDegree(const vector<vector<pair<int,double>>>& adjList, vect
             feats[u].avg_neighbor_degree = 0.0;
             continue;
         }
-        double sum_deg = 0.0,total_w = 0.0;;
+        double sum_deg = 0.0,total_w = 0.0;
         for (auto &[v, w] : neighbors) {
             sum_deg += w*(feats[v].in_degree + feats[v].out_degree);
             total_w += w;
@@ -146,18 +146,20 @@ void computePageRank(const vector<vector<pair<int,double>>>& adjList, vector<dou
             new_rank[u] += damping * dangling_sum / N;
         }
 
-        for (int u = 0; u < N; ++u) {
-            int out_deg = adjList[u].size();
-            if (out_deg == 0) continue;
-            double sumW = 0.0;
-            for (auto &p : adjList[u]) sumW += p.second;
+    //  Precompute outgoing weight sums 
+    vector<double> outWeightSum(N, 0.0);
+    for (int u = 0; u < N; ++u)
+    for (auto &[v, w] : adjList[u])
+        outWeightSum[u] += w;
 
-            for (auto &[v, w] : adjList[u]) {
-                    new_rank[v] += damping * pagerank[u] * (w / sumW);
-                }
-
-            
+        // Compute PageRank  using precomputed sums 
+    for (int u = 0; u < N; ++u) {
+        if (outWeightSum[u] == 0) continue; // skip nodes with no outgoing edges
+        for (auto &[v, w] : adjList[u]) {
+         new_rank[v] += damping * pagerank[u] * (w / outWeightSum[u]);
         }
+    }
+
 
         // Check if ranks have converged
         double err = 0.0;
