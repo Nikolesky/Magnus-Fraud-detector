@@ -77,6 +77,8 @@ vector<double> initialize_weights(int n_inputs) {
 // Builds a fully connected graph-based neural network
 struct NeuralNetwork {
     vector<Layer> layers;
+    unordered_map<int, GraphNode*> node_map; // <-- Hash map for O(1) node lookup
+
     NeuralNetwork() {
         vector<int> layer_sizes = {5, 16, 8, 4, 2, 1};
         int node_id = 0;
@@ -91,6 +93,11 @@ struct NeuralNetwork {
             }
         }
 
+        // Register nodes in hash map
+        for (auto &L : layers)
+            for (auto &n : L.nodes)
+                node_map[n.id] = &n;
+
         static thread_local mt19937 gen((unsigned)chrono::high_resolution_clock::now().time_since_epoch().count());
         for (int i = 1; i < layer_sizes.size(); i++) {
             int prev_size = layer_sizes[i - 1];
@@ -103,15 +110,14 @@ struct NeuralNetwork {
             }
         }
     }
-};
 
-// Finds a node by its ID
-GraphNode* findNodeById(vector<Layer> &layers, int id) {
-    for (auto &L : layers)
-        for (auto &n : L.nodes)
-            if (n.id == id) return &n;
-    return nullptr;
-}
+    // Replaces O(n) search with O(1) hash lookup
+    GraphNode* findNodeById(int id) {
+        auto it = node_map.find(id);
+        if (it != node_map.end()) return it->second;
+        return nullptr;
+    }
+};
 
 // Computes average of each feature
 vector<double> computeFeatureMeans(const vector<NodeFeatures>& data) {
@@ -200,7 +206,7 @@ void train_model(NeuralNetwork &nn, vector<NodeFeatures> &features, int epochs =
                 for (auto &node : nn.layers[li].nodes) {
                     double z = node.bias;
                     for (auto &edge : node.edges) {
-                        GraphNode *prev = findNodeById(nn.layers, edge.to);
+                        GraphNode *prev = nn.findNodeById(edge.to); // <-- O(1) lookup
                         if (prev) z += prev->output * edge.weight;
                     }
                     node.z = z;
@@ -232,7 +238,7 @@ void train_model(NeuralNetwork &nn, vector<NodeFeatures> &features, int epochs =
             for (int li = 1; li < nn.layers.size(); ++li) {
                 for (auto &node : nn.layers[li].nodes) {
                     for (auto &edge : node.edges) {
-                        GraphNode *prev = findNodeById(nn.layers, edge.to);
+                        GraphNode *prev = nn.findNodeById(edge.to);
                         if (!prev) continue;
                         double grad_w = node.delta * prev->output;
                         grad_w = max(-5.0, min(5.0, grad_w));
@@ -294,8 +300,8 @@ int main() {
         return 1;
     }
 
-    train_model(nn, data, 100, 0.0025);
-    save_model(nn, "../models/model_graph.pkl");
+    train_model(nn, data, 3000, 0.0025);
+    save_model(nn, "../models/model_graph1.pkl");
     cout << "Training complete!" << endl;
     return 0;
 }
