@@ -60,3 +60,20 @@ Magnus-Fraud-detector/
    └── dashboard.py
 
 ```
+
+# Graph Feature Extraction (graph_features.cpp)
+
+This module processes the transaction data and creates a graph-based representation of the network.
+Each account is treated as a node, and every transaction between two accounts is represented as a directed edge weighted by the transaction amount.
+
+It then calculates several important features for each account, such as:
+
+ -In-degree and Out-degree – number of incoming and outgoing transactions
+
+ -Average Neighbor Degree – how connected an account’s neighbors are
+
+ -PageRank – measures how central or important an account is in the network
+
+ -Clustering Coefficient – checks how strongly an account’s neighbors are connected, which can help identify fraud rings
+
+Finally, all the computed features are saved in node_features.csv, which is later used for fraud scoring and model training.
