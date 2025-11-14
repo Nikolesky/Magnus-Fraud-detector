@@ -28,7 +28,21 @@ U47         | 0.92
 U85         | 0.78
 U128        | 0.15
 ```
+# How to run:
+```
+# 1. Install Python dependencies
+pip install -r requirements.txt
 
+# 2. Generate risk scores
+./src/risk_scorer.exe
+> data/node_features.csv
+
+# 3. Run DSA-backed analytics
+./src/calculatingusingdatastructs.exe
+
+# 4. Launch dashboard interface
+streamlit run ui/dashboard.py
+```
 # File structure:
 
 ```
