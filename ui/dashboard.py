@@ -38,7 +38,7 @@ def load_dashboard_data():
     except:
         return None
 
-# ----------------- HOME PAGE -----------------
+#HOME PAGE 
 if page == "Home":
     df = load_dashboard_data()
     
@@ -73,7 +73,7 @@ if page == "Home":
     else:
         st.info("Dashboard CSV not found. Make sure C++ program has exported data.")
 
-# ----------------- SEARCH PAGE -----------------
+#SEARCH PAGE 
 elif page == "Search Transaction":
     st.header("Search Transaction")
     
