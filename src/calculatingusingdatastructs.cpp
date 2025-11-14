@@ -94,7 +94,7 @@ vector<transaction> sortbyrisk(){ //sorting the vector by risks
 }
 
 void showtoprisks(){ //using max heap
-    cout<<"Top 10 Risky Accounts:"<<endl;
+    cout<<"Top 5 Risky Accounts:"<<endl;
    
 
     priority_queue<pair<float, string>> temp = topriskyaccs;
