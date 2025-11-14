@@ -35,7 +35,7 @@ pip install -r requirements.txt
 
 # 2. Generate risk scores
 ./src/risk_scorer.exe
-> data/node_features.csv
+> PATH/input_file.csv
 
 # 3. Run DSA-backed analytics
 ./src/calculatingusingdatastructs.exe
