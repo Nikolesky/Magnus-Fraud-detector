@@ -49,6 +49,9 @@ Magnus-Fraud-detector/
 ├── results/
 │   ├── node_input.csv
 │   ├── risk_scorer.csv
+|   ├── network_metrics.csv
+|   ├── suspicious_transactions.csv
+|   ├── user_statistics
 │   └── graph.py   
 │
 ├── src/         
@@ -57,7 +60,11 @@ Magnus-Fraud-detector/
 │   │    ├── graph_features.exe
 │   │    ├── neural_network.cpp  
 │   │    └── neural_netowork.exe        
-│   │ 
+│   │
+|   ├── user_study.py
+|   ├── generating_dataset.py
+|   ├── calculatingusingdatastructs.cpp
+|   ├── calculatingusingdatastructs.exe
 │   ├── risk_scorer.cpp
 │   └── risk_scorer.exe              
 │
@@ -65,8 +72,30 @@ Magnus-Fraud-detector/
    └── dashboard.py
 
 ```
+# CONTRIBUTION:
+
+Kriti Agarwal: 
+- Performed exploratory analysis of the transaction dataset, identified key fraud-related patterns, cleaned and prepared data for downstream modules, and generated insights that guided feature design.
+
+Radhika Nijhara:
+- Designed and implemented the transaction-graph architecture, mapped accounts and transfers into a graph structure, and built algorithms to extract structural fraud indicators such as hubs, cycles, and abnormal connectivity.
+
+Vempati Nityan:
+- Developed and trained the neural-network fraud detection model, optimized hyperparameters, integrated processed graph/data features, and produced final risk-score outputs for each account.
+
+Vanshika Mehta
+- Built the user-facing dashboard to visualise risk scores clearly, designed a clean interface for non-technical users, and ensured results were presented in an interpretable and reproducible manner.
 
 # FLOW:
+
+**Data Generation and Analysis ( generating_dataset.py and user_study.py for implementing):**
+```
+-This module loads the transaction dataset and performs multiple fraud-related analyses using different data structures.
+-It computes user-level statistics using hash maps, detects laundering patterns using graphs, performs time-based searches with binary search, extracts top-K anomalies using heaps, and identifies repeated behavior patterns using a trie.
+-Each analyser focuses on a specific fraud signal such as high-frequency activity, cyclic money flow, suspiciously large transfers, or repeated transaction patterns.
+-All computed results are exported into structured CSV, JSON, and TXT files, which are later used for fraud scoring, dashboard visualization, and reporting.
+Overall, this module forms the core analytical engine of the project, turning raw transactions into meaningful fraud indicators.
+```
 
 **Graph Feature Extraction (graph_features.cpp for training and risk_scorer.cpp for fraud scoring):**
 ```
@@ -95,4 +124,13 @@ The nodes of the input layer are connected to the nodes of successive layer thro
 -Output Layer: fraud probability (risk score)
 -Connections: stored as a graph (vector<edges> per node)
 -Weights: stored using an unordered_map<int, GraphNode*> for O(1) access
+```
+
+**Dashboard Processing & Visualization ( calculatingusingdatastructs.cpp and dashboard.py for implementing):**
+```
+-Takes the computed risk scores and prepares them for fast retrieval and dashboard display.
+-The C++ backend loads all account risks and uses optimized data structures (vector, hash map, priority queue)for quick sorting, searching, and top-K extraction.
+-Exports a clean dashboard.csv file with all accounts ranked by risk.
+-The Streamlit frontend loads this file to show metrics, charts, top-risk accounts, and an ID-based search tool.
+Together, the module provides a high-performance, interactive system for monitoring and analyzing fraud risk across the network.
 ```
